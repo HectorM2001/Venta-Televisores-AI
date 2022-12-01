@@ -1,0 +1,178 @@
+---
+title: "Venta de Televisores"
+author: "Héctor Francisco Marin Garrido"
+date: "2022-12-01"
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+---
+```{r}
+t=seq(1, 16, 1)
+v=c(4.8,4.1,6.0,6.5,5.8,5.2,6.8,7.4,6.0,5.6,7.5,7.8,6.3,5.9,8.0,8.4)
+```
+
+Hacer grafico de dispersion y ver los ciclos
+
+```{r}
+plot(t,v,main="Ventas de televisores",xlab="Trimestre",ylab="Ventas (miles)",type="b", col="red")
+```
+
+Descomponer la serie en sus 3 componentes e interpretar
+
+```{r}
+ts=ts(v, frequency=4)
+descomp=decompose(ts, type="multiplicative")
+plot(descomp, col="red")
+```
+
+Grafico de dispersion de la tendencia
+```{r}
+plot(descomp$trend,main="Tendencia",xlab="Año",ylab="Ventas (miles)",type="b",col="red")
+```
+
+Recta con ventas desestacionalizadas
+```{r}
+y = descomp$x/descomp$seasonal
+x = seq(1, 16, 1)
+lineal_mod = lm(y ~ x)
+```
+
+```{r}
+plot(x,y,main="Tendencia",xlab="Trimestre", ylab="Ventas (miles)",type="b",col="blue")
+abline(lineal_mod,col="red")
+```
+
+Pertinencia del modelo lineal:
+
+```{r}
+sumlm <- summary(lineal_mod)
+sumlm
+```
+
+Tenemos un buen modelo ya que explica el 92% de la información y variabilidad del probelma, al tener un valor de R cuadrada de 0.9208
+
+Significancia de beta
+
+```{r}
+sumlm$coefficients[2,4]
+```
+Ya que el p-value es menor que .05 rechazamos la hipotesis nula por lo que concluimos que la pendiente es significativa.
+
+Variabilidad explicada por el modelo
+```{r}
+sumlm$r.squared
+```
+
+El modelo explica el 92% de la informacion y de la variabilidad de los datos
+
+Residuos
+
+```{r}
+plot(lineal_mod$residuals, main="Residuos", xlab="Trimestre", ylab="Residuos", 
+     type="b", col="red")
+```
+Los residuos aparentan comportarse aleatoriamente, no se observa una tendencia en su comportamiento.
+
+Shapiro test
+```{r}
+shapiro.test(lineal_mod$residuals)
+```
+Como el pvalue es mayor que .05 no podemos descartar la hipotesis nula que indica que los residuos siguen una tendencia normal.
+CME y EPAM
+```{r}
+fun = function(x){
+  lineal_mod$coefficients[1] + lineal_mod$coefficients[2]*x
+  }
+```
+
+```{r}
+pv = fun(t)
+CME = mean((pv - v)^2, na.rm=TRUE)
+CME
+```
+
+```{r}
+EPAM =mean(abs((pv - v)/v), na.rm=TRUE)
+EPAM
+```
+Grafico de valores de ventas contra tiempo
+
+```{r}
+y2 =predict(lineal_mod)*descomp$seasonal
+```
+
+```{r}
+plot(t,v,xlab="Trimestre",ylab="Ventas (miles)",main="Predicción vs Ventas de televisores",type="b", col="blue")
+lines(t,y2, type="b",col="red")
+lines(t,predict(lineal_mod), ol="purple")
+```
+
+Conclusion del modelo
+El modelo se ajusta bien ya que explica el 92% de la variabilidad de los datos, su valor p es menor que 0.05 por lo que no rechazamos la hipotesis nula. No hay tendencia en los residos y los errores porcentuales son bajos indicando un modelo preciso.
+
+Pronostico siguiente año
+
+```{r}
+fun2 = function(x){
+  lineal_mod$coefficients[1] + lineal_mod$coefficients[2] * x
+  }
+```
+
+```{r}
+x2=seq(17, 20, 1)
+y2=fun2(x2)*descomp$figure
+y2
+```
+
+Predicciones
+
+```{r}
+x3 = seq(16, 20, 1)
+p2 = c(v[16],y2)
+plot(x3,p2,xlab="Trimestre",ylab="Ventas miles",main="Prediccion de ventas de televisores",type="b",col="blue",xlim =c(1,20),ylim=c(4, 9.5))
+lines(t, v, type="b", col="red")
+```
+
+A continuación, se presentan los datos correspondientes a los últimos tres años de ventas trimestrales (número de ejemplares vendidos) de un libro de texto universitario.
+
+```{r}
+vl = c(1690,940,2625,2500,1800,900,2900,2360,1850,1100,2930,2615)
+tl =seq(1,12,1)
+```
+
+serie de tiempo
+```{r}
+ts_l =ts(vl,frequency=4)
+descomp_l =decompose(ts_l,type="multiplicative")
+```
+
+Promedios moviles de cuatro trimestres
+
+```{r}
+pm_tri =filter(vl,rep(1/4, 4),sides=2)
+pm_tri
+```
+
+Promedio movil centrado
+
+```{r}
+PMC= filter(vl,rep(1/3, 3),sides=2)
+PMC
+```
+
+Indices estacionales
+
+```{r}
+i_est =descomp_l$figure
+i_est
+```
+
+¿Cuándo obtiene la editorial el mayor índice estacional? ¿Parece razonable este resultado? ¿Por qué?
+
+El indice estacional mas alto es el del tercer trimestre que encaja justo con el inicio del ciclo escolar por lo que me parece un resultado razonable.
+
+
+
+
+
